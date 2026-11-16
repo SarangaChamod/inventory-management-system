@@ -125,9 +125,9 @@ EEI6369/                      (= store-management-api project root)
 - **Default branch:** main
 - **Current working branch:** main
 - **Orca worktree:** no
-- **Branching / commit conventions:** Conventional, descriptive commit messages
+- **Branching / commit conventions:** Author = Saranga Chamod (repo-local, GitHub noreply email). NO Claude co-author trailers (user request)
 - **Push policy:** Push to origin/main authorised by user 2026-11-16; ask for force-push or other branches
-- **Last synced commit:** edc3f50 Initial Store Management REST API
+- **Last synced commit:** 121f3fb first commit (repo recreated by user 2026-11-16)
 
 ## 12. Related Documentation
 - `README.md`: setup, commands, API reference, health, testing, CI, AWS deployment
@@ -136,6 +136,7 @@ EEI6369/                      (= store-management-api project root)
 
 ## 13. Session Log
 <!-- Newest first. One short entry per working session. Older entries go to .plan-archive.md -->
+- **2026-11-16, Claude Opus 5.5:** user deleted old repo + .git and recreated GitHub repo; set repo-local identity again, committed "first commit" (121f3fb) without Claude co-author, pushed main | result: push OK | next: check Actions run, docker compose test, AWS deploy
 - **2026-11-16, Claude Opus 5.5:** set repo-local git identity (noreply email), initial commit edc3f50, added origin SarangaChamod/inventory-management-system, pushed main | result: push OK; Actions status not checked (repo not publicly readable, gh not logged in) | next: check Actions run, docker compose test, AWS deploy
 - **2026-11-16, Claude Opus 5.5:** implemented full Store Management API from user spec (code, tests, Docker, compose, CI, docs), Maven wrapper, git init | files: src/**, pom.xml, Dockerfile, docker-compose.yml, .github/workflows/devsecops.yml, README.md | result: `mvn verify` 63/63 tests pass; Docker not run (daemon off) | next: docker compose run, GitHub remote (ask), AWS deploy
 - **2026-11-16, Claude Opus 5.5:** project folder initialised; awaiting project details | files: .plan | result: .plan created | next: collect project details
