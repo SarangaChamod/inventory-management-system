@@ -1,0 +1,141 @@
+# Project Plan: EEI6369 – Store Management REST API
+
+> Persistent project memory shared by every AI model and session.
+> **Read this file fully before starting work. Update it when anything important changes.**
+> Edit surgically. Never delete history; move old entries to `.plan-archive.md` instead.
+> Never put secrets, tokens or passwords in this file.
+
+- **Last updated:** 2026-11-16 by Claude Opus 5.5 (Claude Code)
+- **Status:** Active development
+- **Current focus:** v1.0.0 implemented and tests pass; next: Docker verification, GitHub remote (awaiting permission), AWS deployment
+
+---
+
+## 1. Overview & Objectives
+Store Management REST API for the EEI6369 AWS Cloud Computing practical assessment. Deployed on
+AWS EC2 with Docker, database on Amazon RDS PostgreSQL. No frontend. See `PROJECT_CONTEXT.md`.
+
+- Working, production-style Spring Boot API: products, categories, inventory
+- Secure, env-var-based configuration; Docker image; GitHub Actions DevSecOps pipeline
+- Easy deployment to EC2 + RDS
+
+## 2. Requirements & Features
+| ID | Requirement / feature | Priority | Status | Notes |
+|---|---|---|---|---|
+| R1 | Product CRUD `/api/products` (name req., price > 0, qty >= 0, unique SKU, timestamps) | High | Done | SKU trimmed + upper-cased |
+| R2 | Search products by name, filter by category | High | Done | `GET /api/products?name=&category=` (case-insensitive) |
+| R3 | Check available stock | High | Done | `GET /api/products/{id}/stock?required=N` |
+| R4 | Category CRUD `/api/categories` (unique name) | High | Done | Product.category stays a free-text String (per spec) |
+| R5 | Inventory increase/decrease, no negative stock, error on insufficient | High | Done | `POST /api/products/{id}/stock/{increase,decrease}`, 409 |
+| R6 | Layered architecture, constructor DI, DTOs, `@RestControllerAdvice`, Jakarta validation | High | Done | |
+| R7 | PostgreSQL via env vars DB_HOST/PORT/NAME/USERNAME/PASSWORD; validate schema in prod; local profile | High | Done | Flyway + `ddl-auto: validate`; `application-local.yml` |
+| R8 | Actuator `/actuator/health` (db UP) + `/actuator/info`, no sensitive info | High | Done | show-components always, show-details never |
+| R9 | Multi-stage Dockerfile, non-root, port 8080, healthcheck; `.dockerignore`; docker-compose w/ volume | High | Done (not run locally) | Docker daemon not running on this PC |
+| R10 | Tests: service, controller, repository, integration (JUnit 5 + Mockito) | High | Done | 63 tests pass |
+| R11 | Springdoc OpenAPI, Swagger UI `/swagger-ui/index.html` | High | Done | |
+| R12 | README with all required sections | High | Done | |
+| R13 | GitHub Actions `devsecops.yml` | High | Done (not run yet) | needs GitHub remote |
+
+## 3. Technology Stack & Architecture
+- **Languages / frameworks:** Java 17, Spring Boot 3.3.5 (Web, Data JPA, Validation, Actuator), springdoc-openapi 2.6.0
+- **Runtime / platform:** Docker (eclipse-temurin:17-jre-alpine) on AWS EC2
+- **Data storage:** PostgreSQL 16 (Amazon RDS in prod; docker-compose locally; H2 PostgreSQL-mode in tests)
+- **Key libraries / services:** Flyway (schema), Hikari, JUnit 5, Mockito, MockMvc; GitHub Actions, Gitleaks, Trivy, GHCR
+- **Architecture summary:** Controller → Service (@Transactional) → Repository (Spring Data JPA, Specifications, pessimistic lock for stock) → PostgreSQL. DTO records separate from entities. GlobalExceptionHandler returns `ApiErrorResponse` JSON.
+- **How to run:** `docker compose up --build -d` (after `cp .env.example .env`), or `./mvnw spring-boot:run` with DB env vars + `SPRING_PROFILES_ACTIVE=local`
+- **How to test:** `./mvnw verify` (no Docker needed)
+- **How to build / deploy:** `docker build -t store-management-api .`; on EC2 `docker run` with RDS env vars (see README "AWS deployment considerations")
+
+## 4. Folder Structure & Important Files
+```
+EEI6369/                      (= store-management-api project root)
+  .github/workflows/devsecops.yml
+  .mvn/wrapper/maven-wrapper.properties, mvnw, mvnw.cmd
+  src/main/java/com/store/management/{controller,service,repository,entity,dto,exception,config}/
+  src/main/java/com/store/management/StoreManagementApplication.java
+  src/main/resources/application.yml, application-local.yml, db/migration/V1__create_store_schema.sql
+  src/test/java/com/store/management/{controller,service,repository}/, StoreManagementIntegrationTest.java
+  src/test/resources/application-test.yml
+  Dockerfile, .dockerignore, docker-compose.yml, .env.example, pom.xml
+  README.md, PROJECT_CONTEXT.md, CHANGELOG.md, .gitignore, .plan
+```
+| Path | Purpose |
+|---|---|
+| `.plan` | This file: project memory and plan |
+| `PROJECT_CONTEXT.md` | Stable background, scope, constraints |
+| `CHANGELOG.md` | Verified changes |
+| `README.md` | Full user documentation (setup, commands, API, AWS) |
+| `src/main/resources/db/migration/` | Flyway migrations: add `V2__...sql` for schema changes, never edit applied ones |
+| `.env.example` | Template for local `.env` (git-ignored) |
+
+## 5. Roadmap
+| Phase / milestone | Scope | Target date | Status |
+|---|---|---|---|
+| Setup | Requirements, scaffold, git | 2026-11-16 | Done |
+| v1.0.0 implementation | All modules, tests, Docker, CI, docs | 2026-11-16 | Done |
+| Verification | Docker build + compose run, CI on GitHub | TBD | Pending |
+| AWS deployment | RDS + EC2 + Docker | TBD (deadline TBD) | Pending |
+
+## 6. Tasks
+### Ongoing
+- (none)
+
+### Pending
+- [ ] Run `docker compose up --build` once Docker Desktop is running; verify health + Swagger (Docker daemon was not running 2026-11-16)
+- [x] Remote origin added + pushed to main, done 2026-11-16
+- [ ] Confirm `devsecops.yml` passes on GitHub Actions
+- [ ] Deploy to AWS (RDS PostgreSQL private + EC2 with Docker)
+- [ ] Confirm assessment deadline / submission format with user
+
+### Completed
+- [x] Created `.plan`, done 2026-11-16
+- [x] Implemented v1.0.0 (all requirements R1–R13), done 2026-11-16, verified by `mvn verify`: 63 tests, 0 failures
+- [x] Maven wrapper 3.9.9 generated, done 2026-11-16, verified by `./mvnw -v`
+
+## 7. Known Issues & Bugs
+| ID | Issue | Severity | Status | Notes / workaround |
+|---|---|---|---|---|
+| I1 | Docker image / compose not yet run locally | Medium | Open | Docker Desktop daemon not running; CI smoke test also covers it |
+| I2 | No authentication on API | Low | Accepted | Not in requirements; documented in README |
+| I3 | Initial commit blocked: no git identity | Medium | Fixed | Repo-local identity set: Saranga Chamod + GitHub noreply email (keeps personal email private) |
+
+## 8. Technical Decisions
+| Date | Decision | Reason | Alternatives considered |
+|---|---|---|---|
+| 2026-11-16 | Project root = EEI6369 folder (not a `store-management-api/` subfolder) | `.github/workflows` must sit at repo root for Actions to run; keeps `.plan` in the same repo | Subfolder + repo at subfolder |
+| 2026-11-16 | Spring Boot 3.3.5, springdoc 2.6.0, no Lombok | Stable, Java 17 compatible; Lombok optional, records/plain getters avoid annotation-processing issues | Boot 3.4/3.5, Lombok |
+| 2026-11-16 | Flyway owns schema; Hibernate `ddl-auto: validate` everywhere | Spec: schema validation in prod; reproducible schema on RDS | `ddl-auto: update` (rejected for prod) |
+| 2026-11-16 | Tests use H2 in PostgreSQL mode running the real Flyway migration | Tests run without Docker on any machine/CI; still validates schema | Testcontainers (needs Docker) |
+| 2026-11-16 | Pessimistic write lock for stock changes + DB CHECK constraints | Prevent negative stock under concurrency | Optimistic @Version |
+| 2026-11-16 | Insufficient stock and duplicates → HTTP 409; validation → 400 | Conventional REST semantics | 422 |
+| 2026-11-16 | Health: `show-components: always`, `show-details: never` | Matches required response shape without leaking DB info | show-details always |
+| 2026-11-16 | CI publishes image to GHCR using GITHUB_TOKEN | No extra secrets needed; EC2 can `docker pull` | Docker Hub / ECR |
+
+## 9. Discussions & Requirement Changes
+- 2026-11-16: Project folder created; no details provided yet.
+- 2026-11-16: User supplied full requirements (Store Management REST API spec, see PROJECT_CONTEXT.md). Deadline not given.
+
+## 10. Next Steps & Priorities
+1. Start Docker Desktop and run `docker compose up --build -d`; check `/actuator/health` and Swagger UI
+2. Check the DevSecOps workflow run on GitHub Actions
+3. Provision RDS + EC2 and deploy (README section "AWS deployment considerations")
+
+## 11. Git & GitHub
+- **Repository URL:** https://github.com/SarangaChamod/inventory-management-system.git (origin)
+- **Default branch:** main
+- **Current working branch:** main
+- **Orca worktree:** no
+- **Branching / commit conventions:** Conventional, descriptive commit messages
+- **Push policy:** Push to origin/main authorised by user 2026-11-16; ask for force-push or other branches
+- **Last synced commit:** edc3f50 Initial Store Management REST API
+
+## 12. Related Documentation
+- `README.md`: setup, commands, API reference, health, testing, CI, AWS deployment
+- `PROJECT_CONTEXT.md`: purpose, scope, constraints
+- `CHANGELOG.md`: verified changes
+
+## 13. Session Log
+<!-- Newest first. One short entry per working session. Older entries go to .plan-archive.md -->
+- **2026-11-16, Claude Opus 5.5:** set repo-local git identity (noreply email), initial commit edc3f50, added origin SarangaChamod/inventory-management-system, pushed main | result: push OK; Actions status not checked (repo not publicly readable, gh not logged in) | next: check Actions run, docker compose test, AWS deploy
+- **2026-11-16, Claude Opus 5.5:** implemented full Store Management API from user spec (code, tests, Docker, compose, CI, docs), Maven wrapper, git init | files: src/**, pom.xml, Dockerfile, docker-compose.yml, .github/workflows/devsecops.yml, README.md | result: `mvn verify` 63/63 tests pass; Docker not run (daemon off) | next: docker compose run, GitHub remote (ask), AWS deploy
+- **2026-11-16, Claude Opus 5.5:** project folder initialised; awaiting project details | files: .plan | result: .plan created | next: collect project details

@@ -1,0 +1,7 @@
+# Normalise line endings; shell scripts must keep LF to run in Linux containers/CI
+* text=auto
+mvnw text eol=lf
+*.sh text eol=lf
+mvnw.cmd text eol=crlf
+*.cmd text eol=crlf
+*.jar binary

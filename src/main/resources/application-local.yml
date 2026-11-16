@@ -1,0 +1,18 @@
+# ---------------------------------------------------------------------------
+# Optional local development profile: SPRING_PROFILES_ACTIVE=local
+# Defaults point at the PostgreSQL started by docker-compose (localhost:5432).
+# Credentials still come from DB_USERNAME / DB_PASSWORD (see .env.example).
+# ---------------------------------------------------------------------------
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:storedb}
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+logging:
+  level:
+    com.store.management: DEBUG
+    org.springframework.web: INFO
